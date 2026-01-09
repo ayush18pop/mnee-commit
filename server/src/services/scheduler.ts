@@ -1,48 +1,60 @@
-import { getSettleableCommitments, updateCommitmentState } from '../db/index.js';
-import { isContractConfigured } from './contractService.js';
+/**
+ * Auto-settlement Scheduler
+ * 
+ * Runs periodically to find and settle eligible commitments.
+ * Calls batchSettle() on the smart contract.
+ */
+
+import {
+  getPendingSettlements,
+  batchSettle,
+  getMaxBatchSize,
+  isContractConfigured,
+  canWrite,
+} from './contractService.js';
 
 let schedulerInterval: ReturnType<typeof setInterval> | null = null;
 
 /**
- * Auto-settlement scheduler (Relayer)
- * 
- * Runs periodically to check for commitments that:
- * 1. Are in SUBMITTED state
- * 2. Have passed the release_after timestamp (dispute window closed)
- * 3. Have no active disputes
- * 
- * These commitments are eligible for automatic settlement.
- * The scheduler calls settle() on the smart contract to release funds.
- * 
- * NOTE: settle() is a public function - if the relayer is down,
- * users can manually call it on Etherscan.
+ * Process settleable commitments
  */
 async function processSettleableCommitments(): Promise<void> {
-  const now = Date.now();
-  const settleable = await getSettleableCommitments(now);
-
-  if (settleable.length === 0) {
+  if (!isContractConfigured()) {
     return;
   }
 
-  console.log(`[Scheduler] Found ${settleable.length} commitment(s) ready for settlement`);
+  if (!canWrite()) {
+    console.log('[Scheduler] Skipping - no relayer key configured');
+    return;
+  }
 
-  for (const commitment of settleable) {
-    try {
-      if (isContractConfigured()) {
-        // TODO: Call settle() on smart contract
-        // const txHash = await settleCommitment(commitment.onChainCommitId);
-        console.log(`[Scheduler] Would settle commitment ${commitment.id} on-chain`);
-      }
+  try {
+    const pending = await getPendingSettlements();
 
-      // Update local state to SETTLED
-      await updateCommitmentState(commitment.id, 'SETTLED');
-
-      console.log(`[Scheduler] Marked commitment ${commitment.id} as settled`);
-    } catch (error) {
-      console.error(`[Scheduler] Failed to settle commitment ${commitment.id}:`, error);
-      // Continue with other commitments even if one fails
+    if (pending.length === 0) {
+      return;
     }
+
+    console.log(`[Scheduler] Found ${pending.length} commitment(s) ready for settlement`);
+
+    // Get max batch size from contract
+    const maxBatchSize = await getMaxBatchSize();
+
+    // Process in batches
+    const commitIds = pending.map(p => p.commitId);
+
+    for (let i = 0; i < commitIds.length; i += maxBatchSize) {
+      const batch = commitIds.slice(i, i + maxBatchSize);
+
+      try {
+        const txHash = await batchSettle(batch);
+        console.log(`[Scheduler] Settled ${batch.length} commitments. TX: ${txHash}`);
+      } catch (error) {
+        console.error(`[Scheduler] Failed to settle batch:`, error);
+      }
+    }
+  } catch (error) {
+    console.error('[Scheduler] Error processing settlements:', error);
   }
 }
 
@@ -53,6 +65,16 @@ async function processSettleableCommitments(): Promise<void> {
 export function startScheduler(intervalMs: number = 60_000): void {
   if (schedulerInterval) {
     console.warn('[Scheduler] Already running');
+    return;
+  }
+
+  if (!isContractConfigured()) {
+    console.warn('[Scheduler] Contract not configured - scheduler disabled');
+    return;
+  }
+
+  if (!canWrite()) {
+    console.warn('[Scheduler] No relayer key - scheduler disabled');
     return;
   }
 

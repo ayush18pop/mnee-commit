@@ -1,69 +1,186 @@
+/**
+ * Commitment Routes
+ * POST /commit/create               - Create commitment (deducts balance)
+ * POST /commit/:id/submit          - Submit work evidence
+ * GET  /commit/:id                  - Get commitment details
+ * GET  /commit/server/:guildId     - List by server
+ * GET  /commit/contributor/:address - List by contributor
+ */
+
 import { Router } from 'express';
 import type { Request, Response } from 'express';
 import {
   createCommitment,
-  markDelivered,
+  submitWork,
   getCommitment,
-  listCommitments,
-} from '../services/commitService.js';
+  getCommitmentsByServer,
+  getCommitmentsByContributor,
+} from '../services/contractService.js';
 import type {
   ApiResponse,
   CreateCommitmentRequest,
   CreateCommitmentResponse,
-  DeliverRequest,
-  DeliverResponse,
-  Commitment,
-} from '../types/commit.js';
+  SubmitWorkRequest,
+  SubmitWorkResponse,
+  CommitmentData,
+} from '../types/index.js';
 
 export const commitRouter = Router();
 
 /**
+ * GET /commit/server/:guildId
+ * List commitments by server
+ * NOTE: This route must be defined BEFORE /:id to avoid conflict
+ */
+commitRouter.get('/server/:guildId', async (req: Request, res: Response) => {
+  try {
+    const { guildId } = req.params;
+
+    if (!guildId) {
+      res.status(400).json({
+        success: false,
+        error: 'guildId is required',
+      } satisfies ApiResponse<never>);
+      return;
+    }
+
+    const commitments = await getCommitmentsByServer(guildId);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        guildId,
+        count: commitments.length,
+        commitments,
+      },
+    } satisfies ApiResponse<{ guildId: string; count: number; commitments: Array<CommitmentData & { commitId: number }> }>);
+  } catch (error) {
+    console.error('Error listing commitments by server:', error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to list commitments',
+    } satisfies ApiResponse<never>);
+  }
+});
+
+/**
+ * GET /commit/contributor/:address
+ * List commitments by contributor
+ * NOTE: This route must be defined BEFORE /:id to avoid conflict
+ */
+commitRouter.get('/contributor/:address', async (req: Request, res: Response) => {
+  try {
+    const { address } = req.params;
+
+    if (!address) {
+      res.status(400).json({
+        success: false,
+        error: 'address is required',
+      } satisfies ApiResponse<never>);
+      return;
+    }
+
+    const commitments = await getCommitmentsByContributor(address);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        address,
+        count: commitments.length,
+        commitments,
+      },
+    } satisfies ApiResponse<{ address: string; count: number; commitments: Array<CommitmentData & { commitId: number }> }>);
+  } catch (error) {
+    console.error('Error listing commitments by contributor:', error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to list commitments',
+    } satisfies ApiResponse<never>);
+  }
+});
+
+/**
  * POST /commit/create
- * Create a new commitment (off-chain record)
- * User must then call createCommit() on smart contract to fund escrow
+ * Create a new commitment (deducts from server balance)
  */
 commitRouter.post('/create', async (req: Request, res: Response) => {
   try {
     const input = req.body as CreateCommitmentRequest;
 
     // Validate required fields
-    if (!input.clientAddress || !input.contributorAddress) {
+    if (!input.guildId) {
       res.status(400).json({
         success: false,
-        error: 'Missing required fields: clientAddress, contributorAddress',
+        error: 'guildId is required',
       } satisfies ApiResponse<never>);
       return;
     }
 
-    if (!input.amount || input.amount <= 0) {
+    if (!input.contributor) {
       res.status(400).json({
         success: false,
-        error: 'Amount must be a positive number',
+        error: 'contributor address is required',
       } satisfies ApiResponse<never>);
       return;
     }
 
-    if (!input.deliveryDeadline) {
+    if (!input.token) {
       res.status(400).json({
         success: false,
-        error: 'deliveryDeadline is required',
+        error: 'token address is required',
       } satisfies ApiResponse<never>);
       return;
     }
 
-    if (!input.disputeWindowSeconds || input.disputeWindowSeconds <= 0) {
+    if (!input.amount) {
       res.status(400).json({
         success: false,
-        error: 'disputeWindowSeconds must be a positive number',
+        error: 'amount is required',
       } satisfies ApiResponse<never>);
       return;
     }
 
-    const result = await createCommitment(input);
+    if (!input.deadline || input.deadline <= Math.floor(Date.now() / 1000)) {
+      res.status(400).json({
+        success: false,
+        error: 'deadline must be a future timestamp',
+      } satisfies ApiResponse<never>);
+      return;
+    }
+
+    if (!input.disputeWindow || input.disputeWindow <= 0) {
+      res.status(400).json({
+        success: false,
+        error: 'disputeWindow must be a positive number (seconds)',
+      } satisfies ApiResponse<never>);
+      return;
+    }
+
+    if (!input.specCid) {
+      res.status(400).json({
+        success: false,
+        error: 'specCid (IPFS CID for spec) is required',
+      } satisfies ApiResponse<never>);
+      return;
+    }
+
+    const result = await createCommitment(
+      input.guildId,
+      input.contributor,
+      input.token,
+      input.amount,
+      input.deadline,
+      input.disputeWindow,
+      input.specCid
+    );
 
     res.status(201).json({
       success: true,
-      data: result,
+      data: {
+        commitId: result.commitId,
+        txHash: result.txHash,
+        message: `Commitment #${result.commitId} created successfully`,
+      },
     } satisfies ApiResponse<CreateCommitmentResponse>);
   } catch (error) {
     console.error('Error creating commitment:', error);
@@ -75,65 +192,78 @@ commitRouter.post('/create', async (req: Request, res: Response) => {
 });
 
 /**
- * POST /commit/deliver
- * Submit work for a commitment
- * Triggers AI verification agents
+ * POST /commit/:id/submit
+ * Submit work evidence for a commitment
  */
-commitRouter.post('/deliver', async (req: Request, res: Response) => {
+commitRouter.post('/:id/submit', async (req: Request, res: Response) => {
   try {
-    const input = req.body as DeliverRequest;
+    const commitId = parseInt(req.params.id ?? '', 10);
+    const input = req.body as SubmitWorkRequest;
 
-    if (!input.commitId) {
+    if (isNaN(commitId)) {
       res.status(400).json({
         success: false,
-        error: 'commitId is required',
+        error: 'Invalid commitment ID',
       } satisfies ApiResponse<never>);
       return;
     }
 
-    if (!input.deliverableHash) {
+    if (!input.guildId) {
       res.status(400).json({
         success: false,
-        error: 'deliverableHash is required',
+        error: 'guildId is required',
       } satisfies ApiResponse<never>);
       return;
     }
 
-    const result = await markDelivered(input);
+    if (!input.evidenceCid) {
+      res.status(400).json({
+        success: false,
+        error: 'evidenceCid (IPFS CID for evidence) is required',
+      } satisfies ApiResponse<never>);
+      return;
+    }
+
+    const txHash = await submitWork(input.guildId, commitId, input.evidenceCid);
 
     res.status(200).json({
       success: true,
-      data: result,
-    } satisfies ApiResponse<DeliverResponse>);
+      data: {
+        commitId,
+        evidenceCid: input.evidenceCid,
+        txHash,
+        message: 'Work submitted successfully',
+      },
+    } satisfies ApiResponse<SubmitWorkResponse>);
   } catch (error) {
-    console.error('Error delivering commitment:', error);
-    const statusCode = error instanceof Error && error.message.includes('not found') ? 404 : 500;
-    res.status(statusCode).json({
+    console.error('Error submitting work:', error);
+    res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to mark as delivered',
+      error: error instanceof Error ? error.message : 'Failed to submit work',
     } satisfies ApiResponse<never>);
   }
 });
 
 /**
  * GET /commit/:id
- * Get commitment details by ID
+ * Get commitment details
  */
 commitRouter.get('/:id', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const commitId = parseInt(req.params.id ?? '', 10);
 
-    if (!id) {
+    if (isNaN(commitId)) {
       res.status(400).json({
         success: false,
-        error: 'Commitment ID is required',
+        error: 'Invalid commitment ID',
       } satisfies ApiResponse<never>);
       return;
     }
 
-    const commitment = await getCommitment(id);
+    const commitment = await getCommitment(commitId);
 
-    if (!commitment) {
+    // Check if commitment exists (creator address would be zero for non-existent)
+    if (commitment.creator === '0x0000000000000000000000000000000000000000') {
       res.status(404).json({
         success: false,
         error: 'Commitment not found',
@@ -143,44 +273,13 @@ commitRouter.get('/:id', async (req: Request, res: Response) => {
 
     res.status(200).json({
       success: true,
-      data: commitment,
-    } satisfies ApiResponse<Commitment>);
+      data: { ...commitment, commitId },
+    } satisfies ApiResponse<CommitmentData & { commitId: number }>);
   } catch (error) {
     console.error('Error getting commitment:', error);
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to get commitment',
-    } satisfies ApiResponse<never>);
-  }
-});
-
-/**
- * GET /commit/list/:address
- * List commitments for an address (as client or contributor)
- */
-commitRouter.get('/list/:address', async (req: Request, res: Response) => {
-  try {
-    const { address } = req.params;
-
-    if (!address) {
-      res.status(400).json({
-        success: false,
-        error: 'Address is required',
-      } satisfies ApiResponse<never>);
-      return;
-    }
-
-    const commitments = await listCommitments(address);
-
-    res.status(200).json({
-      success: true,
-      data: commitments,
-    } satisfies ApiResponse<Commitment[]>);
-  } catch (error) {
-    console.error('Error listing commitments:', error);
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to list commitments',
     } satisfies ApiResponse<never>);
   }
 });
