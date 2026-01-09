@@ -1,12 +1,18 @@
 import 'dotenv/config';
 import express from 'express';
 
-import { initializeDatabase, disconnectDatabase } from './db/index.js';
 import { validateConfig, PORT } from './config/index.js';
+import { initializeContract, isContractConfigured } from './services/contractService.js';
 import { startScheduler, stopScheduler } from './services/scheduler.js';
+import { isIpfsConfigured } from './services/ipfsService.js';
+import { connectToMongoDB, disconnectFromMongoDB, isMongoDBConnected } from './services/mongoService.js';
+import { serverRouter } from './routes/server.js';
 import { commitRouter } from './routes/commit.js';
 import { disputeRouter } from './routes/dispute.js';
-import { webhookRouter } from './routes/webhook.js';
+import { settlementRouter } from './routes/settlement.js';
+import { adminRouter } from './routes/admin.js';
+import { agentRouter } from './routes/agent.js';
+import { userRouter } from './routes/user.js';
 
 // ============================================================================
 // Server Configuration
@@ -15,7 +21,7 @@ import { webhookRouter } from './routes/webhook.js';
 const app = express();
 
 // Middleware
-app.use(express.json());
+app.use(express.json({ limit: '10mb' })); // Increased limit for document uploads
 
 // Request logging middleware
 app.use((req, res, next) => {
@@ -36,14 +42,21 @@ app.get('/health', (req, res) => {
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
-    version: 'v1.0-erc20',
+    version: 'v2.2-users',
+    contractConfigured: isContractConfigured(),
+    ipfsConfigured: isIpfsConfigured(),
+    mongoConnected: isMongoDBConnected(),
   });
 });
 
 // API routes
+app.use('/server', serverRouter);
 app.use('/commit', commitRouter);
 app.use('/dispute', disputeRouter);
-app.use('/webhook', webhookRouter);
+app.use('/settlement', settlementRouter);
+app.use('/admin', adminRouter);
+app.use('/agent', agentRouter);
+app.use('/user', userRouter);
 
 // 404 handler
 app.use((req, res) => {
@@ -67,37 +80,69 @@ app.use((err: Error, req: express.Request, res: express.Response, _next: express
 // ============================================================================
 
 async function main(): Promise<void> {
-  console.log('Starting Commit Protocol Orchestrator...\n');
+  console.log('Starting MNEE Commit Protocol Server...\n');
 
   // Validate configuration
   validateConfig();
 
-  // Initialize database (Prisma + PostgreSQL)
-  await initializeDatabase();
+  // Initialize contract connection
+  initializeContract();
+
+  // Connect to MongoDB
+  await connectToMongoDB();
 
   // Start scheduler (for automatic settlement)
   startScheduler();
 
   // Start server
   const server = app.listen(PORT, () => {
-    console.log(`\nOrchestrator running on http://localhost:${PORT}`);
-    console.log('\nAvailable endpoints:');
-    console.log('POST /commit/create     - Create new commitment');
-    console.log('POST /commit/deliver    - Submit work for a commitment');
-    console.log('GET  /commit/:id        - Get commitment details');
-    console.log('GET  /commit/list/:addr - List commitments by address');
-    console.log('POST /dispute/open      - Open dispute');
-    console.log('POST /dispute/resolve   - Resolve dispute');
-    console.log('GET  /dispute/:commitId - Get dispute details');
-    console.log('POST /webhook/contract  - Contract event webhook');
-    console.log('GET  /health            - Health check\n');
+    console.log(`\nServer running on http://localhost:${PORT}`);
+    console.log('\n=== Available Endpoints ===\n');
+
+    console.log('Server Management:');
+    console.log('  POST /server/register          - Register Discord server (15 MNEE)');
+    console.log('  POST /server/:guildId/deposit  - Deposit MNEE to balance');
+    console.log('  POST /server/:guildId/withdraw - Withdraw MNEE');
+    console.log('  GET  /server/:guildId          - Get server info & balance');
+
+    console.log('\nCommitments:');
+    console.log('  POST /commit/create              - Create commitment (deducts balance)');
+    console.log('  POST /commit/:id/submit          - Submit work evidence');
+    console.log('  GET  /commit/:id                 - Get commitment details');
+    console.log('  GET  /commit/server/:guildId     - List by server');
+    console.log('  GET  /commit/contributor/:addr   - List by contributor');
+
+    console.log('\nDisputes:');
+    console.log('  POST /dispute/open               - Open dispute with stake');
+    console.log('  GET  /dispute/:commitId          - Get dispute details');
+
+    console.log('\nSettlement:');
+    console.log('  POST /settlement/batch           - Batch settle (cron job)');
+    console.log('  GET  /settlement/pending         - Get pending settlements');
+
+    console.log('\nVerification Agents:');
+    console.log('  POST /agent/github               - GitHub Code Diff verification');
+    console.log('  POST /agent/design               - Visual Design Diff verification');
+    console.log('  POST /agent/document             - Document/Research Diff verification');
+    console.log('  GET  /agent/:cid                 - Retrieve evidence by CID');
+
+    console.log('\nUser Mapping:');
+    console.log('  POST /user                       - Register/update user-wallet mapping');
+    console.log('  GET  /user/:username             - Get wallet by username');
+    console.log('  GET  /user/wallet/:address       - Get username by wallet');
+    console.log('  DELETE /user/:username           - Remove user mapping');
+
+    console.log('\nHealth & Admin:');
+    console.log('  GET  /health                     - Health check');
+    console.log('  GET  /admin/stats                - Protocol statistics');
+    console.log('');
   });
 
   // Graceful shutdown
   const shutdown = async () => {
     console.log('\nShutting down...');
     stopScheduler();
-    await disconnectDatabase();
+    await disconnectFromMongoDB();
     server.close(() => {
       console.log('Server closed');
       process.exit(0);

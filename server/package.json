@@ -1,27 +1,31 @@
 {
   "name": "commit-protocol-server",
-  "version": "1.0.0",
-  "description": "Commit Protocol - Orchestrator backend for AI-verified work commitments with ERC-20 escrow",
+  "version": "2.0.0",
+  "description": "MNEE Commit Protocol - API server for Discord-based work commitments with ERC-20 escrow",
   "main": "out/index.js",
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
-    "start": "node out/index.js",
-    "db:generate": "prisma generate",
-    "db:push": "prisma db push",
-    "db:migrate": "prisma migrate dev",
-    "db:studio": "prisma studio"
+    "start": "node out/index.js"
   },
   "dependencies": {
-    "@prisma/client": "^6.2.0",
+    "@google/generative-ai": "^0.21.0",
+    "@octokit/rest": "^21.0.0",
+    "axios": "^1.7.0",
     "dotenv": "^16.4.7",
-    "express": "^4.21.2"
+    "ethers": "^6.13.4",
+    "express": "^4.21.2",
+    "form-data": "^4.0.0",
+    "marked": "^15.0.0",
+    "mongoose": "^8.9.0",
+    "pdf-parse": "^1.1.1",
+    "sharp": "^0.33.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.0",
     "@types/node": "^22.10.5",
-    "prisma": "^6.2.0",
+    "@types/pdf-parse": "^1.1.4",
     "tsx": "^4.19.2",
     "typescript": "^5.9.3"
   }
