@@ -12,35 +12,215 @@ Commit Protocol enables Discord communities and projects to:
 - ✅ **Automatic settlement** via cron job after deadline + dispute window
 - ✅ **AI verification agents** (GitHub PRs, Design files, Documents)
 - ✅ **Dynamic stakes** that scale with task value, reputation, and AI confidence
-- ✅ **Reputation tracking** to reward consistent contributors
+- ✅ **User-wallet mapping** for seamless Discord-to-blockchain identity
 - ✅ **Secure relayer pattern** - bot wallet controls all contract interactions
 
 ## 🏗️ Architecture
 
 ```
-┌──────────────────────────────────────────────────────────────────┐
-│                      Commit Protocol                              │
-├──────────────────────────────────────────────────────────────────┤
-│                                                                   │
-│  ┌────────────┐   ┌──────────────┐   ┌──────────────┐           │
-│  │  Discord   │──▶│  API Server  │──▶│    Smart     │           │
-│  │   Server   │   │  (Node.js)   │   │  Contracts   │           │
-│  │  (Guild)   │   │              │   │  (Solidity)  │           │
-│  └────────────┘   └──────────────┘   └──────────────┘           │
-│                          │                   │                   │
-│                    ┌─────┴─────┐            │                   │
-│                    │           │            │                   │
-│              ┌─────▼─────┐ ┌───▼───┐        │                   │
-│              │  MongoDB  │ │ IPFS  │   MNEE Token               │
-│              │  (Users)  │ │Pinata │                            │
-│              └───────────┘ └───────┘                            │
-│                                                                   │
-│         ┌──────────────┐         ┌──────────────┐               │
-│         │ Cron Job     │────────▶│  AI Agents   │               │
-│         │ (Settlement) │         │  (Gemini)    │               │
-│         └──────────────┘         └──────────────┘               │
-│                                                                   │
-└──────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────┐
+│                           Commit Protocol                                 │
+├──────────────────────────────────────────────────────────────────────────┤
+│                                                                           │
+│   ┌─────────────┐      ┌───────────────┐      ┌─────────────────┐       │
+│   │   Discord   │─────▶│   API Server  │─────▶│ Smart Contract  │       │
+│   │     Bot     │      │   (Express)   │      │   (Commit.sol)  │       │
+│   └─────────────┘      └───────────────┘      └─────────────────┘       │
+│                               │                        │                 │
+│                     ┌─────────┼─────────┐             │                 │
+│                     ▼         ▼         ▼             │                 │
+│              ┌─────────┐ ┌────────┐ ┌────────┐        │                 │
+│              │ MongoDB │ │  IPFS  │ │ Gemini │   MNEE Token             │
+│              │ (Users) │ │Pinata  │ │   AI   │  (ERC-20)                │
+│              └─────────┘ └────────┘ └────────┘                          │
+│                                                                           │
+│                        ┌──────────────────┐                              │
+│                        │   Cron Scheduler │                              │
+│                        │ (Auto-Settlement)│                              │
+│                        └──────────────────┘                              │
+└──────────────────────────────────────────────────────────────────────────┘
+```
+
+## 📁 Complete Folder Structure
+
+```
+mnee-commit/
+│
+├── contracts/                      # Smart Contracts (Foundry)
+│   ├── src/
+│   │   ├── Commit.sol             # Main escrow contract
+│   │   └── interfaces/
+│   │       └── IERC20.sol         # Token interface
+│   ├── test/
+│   │   └── Commit.t.sol           # Contract tests
+│   ├── script/
+│   │   ├── Deploy.s.sol           # Mainnet deployment
+│   │   └── DeployLocal.s.sol      # Local fork deployment
+│   ├── scripts/
+│   │   ├── start-anvil.sh         # Start local fork
+│   │   └── fund-test-wallet.sh    # Fund wallets with MNEE
+│   ├── foundry.toml               # Foundry config
+│   └── README.md
+│
+├── server/                         # API Backend (Node.js + TypeScript)
+│   ├── src/
+│   │   ├── index.ts               # Entry point
+│   │   ├── config/
+│   │   │   └── index.ts           # Environment config
+│   │   ├── models/
+│   │   │   └── User.ts            # MongoDB user model
+│   │   ├── routes/
+│   │   │   ├── server.ts          # Server management
+│   │   │   ├── commit.ts          # Commitment CRUD
+│   │   │   ├── dispute.ts         # Dispute handling
+│   │   │   ├── settlement.ts      # Batch settlement
+│   │   │   ├── agent.ts           # AI agents
+│   │   │   ├── user.ts            # User-wallet mapping
+│   │   │   └── admin.ts           # Admin stats
+│   │   ├── services/
+│   │   │   ├── contractService.ts # Smart contract (ethers.js)
+│   │   │   ├── ipfsService.ts     # IPFS uploads (Pinata)
+│   │   │   ├── mongoService.ts    # MongoDB connection
+│   │   │   ├── scheduler.ts       # Auto-settlement cron
+│   │   │   └── agents/
+│   │   │       ├── githubAgent.ts     # GitHub PR analysis
+│   │   │       ├── designAgent.ts     # Visual design analysis
+│   │   │       └── documentAgent.ts   # Document analysis
+│   │   └── types/
+│   │       ├── index.ts           # Contract types
+│   │       └── agents.ts          # Agent types
+│   ├── package.json
+│   ├── tsconfig.json
+│   ├── .env.example
+│   └── README.md
+│
+├── bot/                            # Discord Bot
+│   ├── index.js                   # Main bot entry
+│   ├── deploy-commands.js         # Slash command registration
+│   ├── gemini-service.js          # AI integration
+│   ├── server-client.js           # API client
+│   ├── mcp-server.js              # MCP server
+│   ├── package.json
+│   ├── .env.example
+│   └── README.md
+│
+├── commit-protocol/                # Documentation
+│   ├── PROTOCOL.md                # Technical specification
+│   └── commit_protocol.pdf        # Whitepaper
+│
+├── README.md                       # This file
+├── SECURITY.md                     # Security guidelines
+└── .gitignore
+```
+
+## 🔄 Complete Workflow
+
+### Phase 1: Server Registration
+
+```
+Discord Admin                API Server              Smart Contract
+     │                           │                         │
+     │  /register-server         │                         │
+     ├──────────────────────────▶│                         │
+     │                           │  registerServer()       │
+     │                           ├────────────────────────▶│
+     │                           │                         │ Pays 15 MNEE
+     │                           │                         │ Server active
+     │                           │◀────────────────────────┤
+     │  ✅ Server registered     │                         │
+     │◀──────────────────────────┤                         │
+```
+
+### Phase 2: Fund Server Balance
+
+```
+Discord Admin                API Server              Smart Contract
+     │                           │                         │
+     │  /deposit 5000 MNEE       │                         │
+     ├──────────────────────────▶│                         │
+     │                           │  depositToServer()      │
+     │                           ├────────────────────────▶│
+     │                           │                         │ Balance += 5000
+     │  ✅ Balance: 5000 MNEE    │                         │
+     │◀──────────────────────────┤                         │
+```
+
+### Phase 3: Create Commitment
+
+```
+Task Creator                 API Server              Smart Contract
+     │                           │                         │
+     │  /commit @user 1000 MNEE  │                         │
+     │  "Build auth feature"     │                         │
+     ├──────────────────────────▶│                         │
+     │                           │  createCommitment()     │
+     │                           ├────────────────────────▶│
+     │                           │                         │ Balance -= 1000
+     │                           │                         │ Commitment #42
+     │  ✅ Commitment #42        │                         │
+     │◀──────────────────────────┤                         │
+```
+
+### Phase 4: Submit Work
+
+```
+Contributor                  API Server              AI Agents        IPFS
+     │                           │                      │               │
+     │  /submit 42 <PR link>     │                      │               │
+     ├──────────────────────────▶│                      │               │
+     │                           │  Analyze PR          │               │
+     │                           ├─────────────────────▶│               │
+     │                           │  confidenceScore: 85 │               │
+     │                           │◀─────────────────────┤               │
+     │                           │  Upload evidence                     │
+     │                           ├─────────────────────────────────────▶│
+     │                           │                      evidenceCid     │
+     │                           │◀─────────────────────────────────────┤
+     │                           │  submitWork(cid)                     │
+     │                           ├─────────────────────▶ Contract       │
+     │  ✅ Work submitted        │                                      │
+     │◀──────────────────────────┤                                      │
+```
+
+### Phase 5: Automatic Settlement
+
+```
+Cron Scheduler               API Server              Smart Contract
+     │                           │                         │
+     │  Every 60 seconds         │                         │
+     ├──────────────────────────▶│                         │
+     │                           │  getPendingSettlements()│
+     │                           ├────────────────────────▶│
+     │                           │  [#42, #43, #44]        │
+     │                           │◀────────────────────────┤
+     │                           │  batchSettle([42,43,44])│
+     │                           ├────────────────────────▶│
+     │                           │                         │ Transfer MNEE
+     │                           │                         │ to contributors
+     │  ✅ 3 commitments settled │                         │
+     │◀──────────────────────────┤                         │
+```
+
+### Phase 6: Dispute (Optional)
+
+```
+Creator (Disputer)           API Server              Smart Contract
+     │                           │                         │
+     │  /dispute 42              │                         │
+     ├──────────────────────────▶│                         │
+     │                           │  calculateStake()       │
+     │                           ├────────────────────────▶│
+     │                           │  stake: 50 MNEE         │
+     │                           │◀────────────────────────┤
+     │                           │  openDispute(stake)     │
+     │                           ├────────────────────────▶│
+     │                           │                         │ Stakes locked
+     │  ✅ Dispute opened        │                         │
+     │◀──────────────────────────┤                         │
+
+     ... Arbitrator resolves dispute ...
+     
+     │  Winner receives stake    │                         │
 ```
 
 ## 💰 MNEE Token
@@ -48,73 +228,11 @@ Commit Protocol enables Discord communities and projects to:
 - **Token**: MNEE ERC-20
 - **Address**: `0x8ccedbAe4916b79da7F3F612EfB2EB93A2bFD6cF`
 - **Network**: Ethereum Mainnet
-- **Testing**: Fork mainnet using Anvil (no testnet available)
+- **Testing**: Fork mainnet using Anvil
 
-## 📁 Repository Structure
+## 🔌 API Endpoints (23 Total)
 
-```
-mnee-commit/
-├── contracts/          # Solidity smart contracts (Foundry)
-│   ├── src/Commit.sol
-│   ├── test/Commit.t.sol
-│   └── script/Deploy.s.sol
-│
-├── server/             # API Backend (Node.js + TypeScript)
-│   ├── src/
-│   │   ├── routes/           # REST API endpoints
-│   │   ├── services/         # Contract, IPFS, AI agents
-│   │   │   └── agents/       # GitHub, Design, Document agents
-│   │   ├── models/           # MongoDB models
-│   │   └── config/           # Environment config
-│   └── README.md
-│
-├── bot/                # Discord bot
-│   └── index.js
-│
-└── commit-protocol/    # Documentation
-    ├── PROTOCOL.md
-    └── commit_protocol.pdf
-```
-
-## 🚀 Quick Start
-
-### Prerequisites
-
-- Node.js 18+
-- MongoDB
-- Foundry (for smart contracts)
-- Ethereum RPC URL (Alchemy/Infura)
-
-### 1. Smart Contracts
-
-```bash
-cd contracts
-forge install
-cp .env.example .env
-forge test
-```
-
-### 2. API Server
-
-```bash
-cd server
-npm install
-cp .env.example .env
-npm run dev
-```
-
-### 3. Discord Bot
-
-```bash
-cd bot
-npm install
-cp .env.example .env
-npm start
-```
-
-## 🔌 API Endpoints
-
-### Server Management
+### Server Management (`/server`)
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | POST | `/server/register` | Register Discord server (15 MNEE) |
@@ -122,7 +240,7 @@ npm start
 | POST | `/server/:guildId/withdraw` | Withdraw MNEE |
 | GET | `/server/:guildId` | Get server info |
 
-### Commitments
+### Commitments (`/commit`)
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | POST | `/commit/create` | Create commitment |
@@ -139,7 +257,7 @@ npm start
 | POST | `/settlement/batch` | Batch settle |
 | GET | `/settlement/pending` | Pending settlements |
 
-### AI Verification Agents
+### AI Verification Agents (`/agent`)
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | POST | `/agent/github` | GitHub PR verification |
@@ -147,7 +265,7 @@ npm start
 | POST | `/agent/document` | Document verification |
 | GET | `/agent/:cid` | Get evidence by CID |
 
-### User Mapping
+### User Mapping (`/user`)
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | POST | `/user` | Register username-wallet |
@@ -163,23 +281,62 @@ npm start
 
 ## 🤖 AI Verification Agents
 
-The protocol includes three AI-powered agents using **Gemini 2.0 Flash**:
-
 ### 1️⃣ GitHub Code Diff Agent
-- Fetches PR details via GitHub API
-- Checks CI/test status
-- Analyzes code changes against task spec
-- Returns confidence score + IPFS evidence
+```bash
+curl -X POST http://localhost:3000/agent/github \
+  -H "Content-Type: application/json" \
+  -d '{
+    "taskSpec": "Implement user authentication with JWT",
+    "prUrl": "https://github.com/owner/repo/pull/123"
+  }'
+```
 
 ### 2️⃣ Visual Design Agent
-- Compares submitted designs to specs
-- Uses Gemini Vision for layout/color analysis
-- Returns confidence score + IPFS evidence
+```bash
+curl -X POST http://localhost:3000/agent/design \
+  -H "Content-Type: application/json" \
+  -d '{
+    "designSpec": "Create a login page with email and password fields",
+    "submittedImages": ["https://example.com/screenshot.png"]
+  }'
+```
 
 ### 3️⃣ Document Agent
-- Parses PDF/Markdown documents
-- Checks structure and section coverage
-- Returns confidence score + IPFS evidence
+```bash
+curl -X POST http://localhost:3000/agent/document \
+  -H "Content-Type: application/json" \
+  -d '{
+    "documentSpec": "Technical spec with: Introduction, Methods, Results",
+    "submittedDocUrl": "https://example.com/doc.pdf"
+  }'
+```
+
+## 🚀 Quick Start
+
+### 1. Smart Contracts
+```bash
+cd contracts
+forge install
+cp .env.example .env
+./scripts/start-anvil.sh
+forge script script/DeployLocal.s.sol --rpc-url http://localhost:8545 --broadcast
+```
+
+### 2. API Server
+```bash
+cd server
+npm install
+cp .env.example .env
+npm run dev
+```
+
+### 3. Discord Bot
+```bash
+cd bot
+npm install
+cp .env.example .env
+npm start
+```
 
 ## 📊 Dynamic Stake Formula
 
@@ -187,38 +344,29 @@ The protocol includes three AI-powered agents using **Gemini 2.0 Flash**:
 Sreq = Sbase × Mtime × Mrep × MAI
 ```
 
-- **Sbase**: Base stake (e.g., 0.01 ETH)
-- **Mtime**: Time multiplier (prevents last-second disputes)
-- **Mrep**: Reputation multiplier (protects proven contributors)
-- **MAI**: AI confidence multiplier (2x for high confidence)
+| Factor | Description |
+|--------|-------------|
+| **Sbase** | Base stake (e.g., 0.01 ETH) |
+| **Mtime** | Time multiplier (prevents last-second disputes) |
+| **Mrep** | Reputation multiplier (protects proven contributors) |
+| **MAI** | AI confidence multiplier (2x for high confidence) |
 
 ## 🔐 Security
 
 - ✅ OpenZeppelin v5.5.0 (ReentrancyGuard, SafeERC20)
 - ✅ Secure relayer pattern - only bot wallet can call protected functions
-- ✅ Server registration with 15 MNEE fee prevents spam
+- ✅ Server registration fee prevents spam
 - ✅ Evidence stored on IPFS (immutable)
+- ✅ Wallet address validation
 - ⏳ Audit pending
 
 ## 🛣️ Roadmap
 
-### ✅ Phase 1: Core Protocol
-- [x] Smart contract implementation
-- [x] ERC-20 escrow with MNEE
-- [x] API server with contract interactions
-- [x] Discord bot integration
-
-### ✅ Phase 2: AI Integration
-- [x] GitHub Code Diff agent
-- [x] Visual Design agent
-- [x] Document/Research agent
-- [x] IPFS evidence storage (Pinata)
-
-### 📋 Phase 3: Decentralization (Planned)
-- [ ] Kleros arbitration integration
-- [ ] Reputation oracle (federated signers)
-- [ ] Multi-chain deployment (Base, Arbitrum)
-- [ ] DAO governance
+| Phase | Status | Features |
+|-------|--------|----------|
+| **Phase 1: Core** | ✅ Complete | Smart contracts, Server registration, Escrow |
+| **Phase 2: AI** | ✅ Complete | GitHub, Design, Document agents, IPFS |
+| **Phase 3: Scale** | 🔄 Planned | Kleros arbitration, Multi-chain, DAO |
 
 ## 🤝 Contributing
 
@@ -240,4 +388,4 @@ MIT License - see [LICENSE](./LICENSE) for details
 
 ---
 
-**Built with**: Solidity • TypeScript • Node.js • MongoDB • Foundry • OpenZeppelin • IPFS • Gemini AI
+**Tech Stack**: Solidity • TypeScript • Node.js • Express • MongoDB • ethers.js • Foundry • OpenZeppelin • IPFS • Gemini AI
