@@ -113,13 +113,19 @@ export function initializeContract(): void {
   provider = new JsonRpcProvider(RPC_URL);
   let baseContract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
 
-  // Check if RELAYER_PRIVATE_KEY is valid (not a placeholder)
-  const isValidPrivateKey = RELAYER_PRIVATE_KEY &&
-    /^0x[a-fA-F0-9]{64}$/.test(RELAYER_PRIVATE_KEY);
+  // Normalize private key to include 0x prefix if missing
+  let normalizedKey = RELAYER_PRIVATE_KEY;
+  if (RELAYER_PRIVATE_KEY && !RELAYER_PRIVATE_KEY.startsWith('0x')) {
+    normalizedKey = `0x${RELAYER_PRIVATE_KEY}`;
+  }
+
+  // Check if RELAYER_PRIVATE_KEY is valid (with or without 0x prefix)
+  const isValidPrivateKey = normalizedKey &&
+    /^0x[a-fA-F0-9]{64}$/.test(normalizedKey);
 
   if (isValidPrivateKey) {
     try {
-      signer = new Wallet(RELAYER_PRIVATE_KEY, provider);
+      signer = new Wallet(normalizedKey, provider);
       baseContract = baseContract.connect(signer) as Contract;
       console.log(`[Contract] Connected with relayer: ${signer.address}`);
     } catch (error) {

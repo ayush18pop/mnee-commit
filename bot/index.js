@@ -49,7 +49,7 @@ function formatDate(timestamp) {
 /**
  * Format data for Discord message - user-friendly, no JSON dumps
  */
-function formatDataForDiscord(data, success = true) {
+function formatDataForDiscord(data, success = true, context = null) {
   if (!data) {
     return success ? "✅ Done!" : "❌ Something went wrong. Please try again.";
   }
@@ -65,11 +65,21 @@ function formatDataForDiscord(data, success = true) {
 
   // String message - just return it
   if (typeof data === "string") {
+    // Check for UnregisteredServer error and provide helpful message
+    if (data.includes("UnregisteredServer") || data.includes("not registered")) {
+      const guildInfo = context?.guildId ? `\n\n**Server ID:** ${context.guildId}` : '';
+      return `❌ This Discord server is not registered with the Commit Protocol.${guildInfo}\n\nPlease register your server first using the web dashboard or \`/register\` command.`;
+    }
     return success ? `✅ ${data}` : `❌ ${data}`;
   }
 
   // Has a message field - use it
   if (data.message) {
+    // Check for UnregisteredServer error
+    if (data.message.includes("UnregisteredServer") || data.message.includes("not registered")) {
+      const guildInfo = context?.guildId ? `\n\n**Server ID:** ${context.guildId}` : '';
+      return `❌ This Discord server is not registered with the Commit Protocol.${guildInfo}\n\nPlease register your server first using the web dashboard or \`/register\` command.`;
+    }
     return success ? `✅ ${data.message}` : `❌ ${data.message}`;
   }
 
@@ -524,6 +534,9 @@ client.on("interactionCreate", async (interaction) => {
         const reason = interaction.options.getString("reason");
 
         try {
+          // Log context for debugging
+          console.log(`[Dispute] Guild ID: ${context.guildId}, Commit ID: ${commitId}`);
+
           // First, calculate the stake amount
           const stakeResult = await serverClient.executeTool(
             "calculate_stake",
@@ -572,6 +585,7 @@ client.on("interactionCreate", async (interaction) => {
           }
 
           // User confirmed, proceed with dispute
+          console.log(`[Dispute] Opening dispute with guildId: ${context.guildId}`);
           result = await serverClient.executeTool(
             "open_dispute",
             { commitId, reason },
@@ -585,6 +599,7 @@ client.on("interactionCreate", async (interaction) => {
             );
           }
         } catch (error) {
+          console.error('[Dispute] Error:', error);
           result = {
             success: false,
             error: error.message || "Failed to open dispute",
@@ -646,7 +661,7 @@ client.on("interactionCreate", async (interaction) => {
     }
 
     // Format and send response
-    const formatted = formatDataForDiscord(result?.data, result?.success);
+    const formatted = formatDataForDiscord(result?.data, result?.success, context);
     await interaction.editReply(formatted);
   } catch (error) {
     console.error(`Error handling /${commandName}:`, error);

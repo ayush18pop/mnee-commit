@@ -6,7 +6,7 @@ import axios from "axios";
  */
 class ServerClient {
   constructor(baseUrl) {
-    this.baseUrl = baseUrl || "http://localhost:3001";
+    this.baseUrl = baseUrl || "https://mnee-commit.onrender.com";
     this.client = axios.create({
       baseURL: this.baseUrl,
       headers: {
@@ -187,6 +187,18 @@ class ServerClient {
   // ============================================================================
   // Disputes
   // ============================================================================
+
+  /**
+   * Calculate stake required for a dispute
+   */
+  async calculateStake(commitId) {
+    try {
+      const response = await this.client.get(`/dispute/calculate-stake/${commitId}`);
+      return { success: true, data: response.data.data };
+    } catch (error) {
+      return this.handleError(error, "calculate stake");
+    }
+  }
 
   /**
    * Open a dispute

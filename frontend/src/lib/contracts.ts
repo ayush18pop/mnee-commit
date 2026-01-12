@@ -42,6 +42,17 @@ export const COMMIT_CONTRACT_ABI = [
     ],
     outputs: [],
   },
+  // resolveDispute(uint256 _commitId, bool _favorContributor)
+  {
+    name: 'resolveDispute',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: '_commitId', type: 'uint256' },
+      { name: '_favorContributor', type: 'bool' },
+    ],
+    outputs: [],
+  },
 
   // ========== View Functions ==========
   

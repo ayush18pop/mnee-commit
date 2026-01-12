@@ -47,7 +47,9 @@
   /* === LAYOUT SPACING - Dynamic based on testnet banner === */
   --navbar-height: 80px;
   --testnet-banner-height: 36px;
-  --total-header-height: calc(var(--navbar-height) + var(--testnet-banner-height));
+  --total-header-height: calc(
+    var(--navbar-height) + var(--testnet-banner-height)
+  );
 }
 
 @theme inline {

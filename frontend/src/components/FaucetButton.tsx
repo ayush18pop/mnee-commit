@@ -47,7 +47,7 @@ export function FaucetButton({
     setResult(null);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://mnee-commit.onrender.com';
       const response = await fetch(`${apiUrl}/faucet`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

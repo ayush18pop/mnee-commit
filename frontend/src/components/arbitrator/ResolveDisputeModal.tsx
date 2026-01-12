@@ -7,8 +7,15 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { useResolveDispute } from "@/hooks/useContract";
 import { formatMNEE } from "@/lib/utils";
+import type { Commitment } from "@/hooks/useContract";
 
-export function ResolveDisputeModal({ isOpen, onClose, commitment }) {
+interface ResolveDisputeModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  commitment: Commitment;
+}
+
+export function ResolveDisputeModal({ isOpen, onClose, commitment }: ResolveDisputeModalProps) {
   const [favorContributor, setFavorContributor] = useState<boolean | null>(null);
   const { resolveDispute, isLoading, error, txHash } = useResolveDispute();
 

@@ -28,6 +28,11 @@ const contributorNavItems = [
   { icon: LayoutGrid, label: "My Work", href: "/contributor", requiresGuildId: false },
 ];
 
+// Arbitrator nav - single dashboard
+const arbitratorNavItems = [
+  { icon: LayoutGrid, label: "Dashboard", href: "/arbitrator", requiresGuildId: false },
+];
+
 // Common items
 const commonItems = [
   { icon: Home, label: "Home", href: "/" },
@@ -35,7 +40,7 @@ const commonItems = [
 ];
 
 interface SidebarProps {
-  type: "dao" | "contributor";
+  type: "dao" | "contributor" | "arbitrator";
 }
 
 // Loading fallback
@@ -55,7 +60,7 @@ function SidebarInner({ type }: SidebarProps) {
   const { disconnect } = useDisconnect();
   const { address } = useAccount();
 
-  const items = type === "dao" ? daoNavItems : contributorNavItems;
+  const items = type === "dao" ? daoNavItems : type === "arbitrator" ? arbitratorNavItems : contributorNavItems;
 
   // Build href with guildId preserved if needed
   const buildHref = (item: typeof items[0]) => {

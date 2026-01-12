@@ -9,10 +9,15 @@ import { StatusBadge } from "@/components/ui/Badge";
 import { ResolveDisputeModal } from "./ResolveDisputeModal";
 import { formatMNEE, formatTimeRemaining } from "@/lib/utils";
 import { STATE_LABELS } from "@/lib/contracts";
+import type { Commitment } from "@/hooks/useContract";
 
 const IPFS_GATEWAY = "https://ipfs.io/ipfs/";
 
-export function DisputeCard({ commitment }) {
+interface DisputeCardProps {
+  commitment: Commitment;
+}
+
+export function DisputeCard({ commitment }: DisputeCardProps) {
   const [showResolveModal, setShowResolveModal] = useState(false);
 
   return (

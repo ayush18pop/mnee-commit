@@ -33,7 +33,7 @@ function ContributorDashboardInner() {
   const activeWork = commitments.filter(c => c.state === CommitmentState.FUNDED);
   const submittedWork = commitments.filter(c => c.state === CommitmentState.SUBMITTED);
   const completedWork = commitments.filter(c => 
-    c.state === CommitmentState.SETTLED || c.state === CommitmentState.APPROVED
+    c.state === CommitmentState.SETTLED
   );
   
   const pendingAmount = activeWork.reduce((sum, c) => sum + c.amount, 0n);

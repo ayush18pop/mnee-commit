@@ -2,7 +2,7 @@
 
 import useSWR from 'swr';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://mnee-commit.onrender.com';
 
 // Generic fetcher for SWR
 const fetcher = async (url: string) => {
