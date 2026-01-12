@@ -12,6 +12,7 @@ const navItems = [
   { label: "Protocol", href: "/docs" },
   { label: "DAO Dashboard", href: "/dao" },
   { label: "Contributor", href: "/contributor" },
+  { label: "Arbitrator", href: "/arbitrator" },
 ];
 
 export function Navbar() {

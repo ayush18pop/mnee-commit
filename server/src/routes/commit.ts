@@ -30,9 +30,6 @@ export const commitRouter = Router();
 // MNEE Token address on mainnet
 const MNEE_TOKEN = '0x8ccedbAe4916b79da7F3F612EfB2EB93A2bFD6cF';
 
-// Default dispute window: 3 days
-const DEFAULT_DISPUTE_WINDOW = 3 * 24 * 60 * 60;
-
 
 /**
  * GET /commit/server/:guildId
@@ -130,7 +127,8 @@ interface NaturalCreateRequest {
   contributorAddress: string;
   amountMNEE: number;
   taskDescription: string;
-  deadlineDays: number;
+  deadlineDays?: number;
+  deadlineSeconds?: number; // Takes precedence over deadlineDays if provided
   creatorDiscordId?: string;
 }
 
@@ -159,8 +157,9 @@ commitRouter.post('/create', async (req: Request, res: Response) => {
       return;
     }
 
-    if (!input.deadlineDays || input.deadlineDays <= 0) {
-      res.status(400).json({ success: false, error: 'deadlineDays must be positive' });
+    // Either deadlineDays or deadlineSeconds must be provided
+    if ((!input.deadlineDays || input.deadlineDays <= 0) && (!input.deadlineSeconds || input.deadlineSeconds <= 0)) {
+      res.status(400).json({ success: false, error: 'Either deadlineDays or deadlineSeconds must be positive' });
       return;
     }
 
@@ -185,8 +184,18 @@ commitRouter.post('/create', async (req: Request, res: Response) => {
 
     // Calculate deadline timestamp using BLOCKCHAIN time (important for Anvil/local testing)
     const blockTimestamp = await getBlockTimestamp();
-    const deadline = blockTimestamp + (input.deadlineDays * 24 * 60 * 60);
-    console.log(`[Commit] Block timestamp: ${blockTimestamp}, Deadline: ${deadline} (${input.deadlineDays} days)`);
+    
+    // Use deadlineSeconds directly if provided, otherwise convert days to seconds
+    const deadlineOffset = input.deadlineSeconds 
+      ? input.deadlineSeconds 
+      : (input.deadlineDays! * 24 * 60 * 60);
+    const deadline = blockTimestamp + deadlineOffset;
+    
+    // DESIGN: dispute window = deadline duration
+    // If you give someone 7 days to complete work, they also get 7 days to dispute
+    const disputeWindow = deadlineOffset;
+    
+    console.log(`[Commit] Block timestamp: ${blockTimestamp}, Deadline: ${deadline} (${deadlineOffset}s = dispute window)`);
 
     // Create commitment on-chain
     const result = await contractCreateCommitment(
@@ -195,7 +204,7 @@ commitRouter.post('/create', async (req: Request, res: Response) => {
       MNEE_TOKEN,
       amountWei,
       deadline,
-      DEFAULT_DISPUTE_WINDOW,
+      disputeWindow,
       specCid
     );
 

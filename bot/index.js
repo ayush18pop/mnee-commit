@@ -418,19 +418,23 @@ client.on("interactionCreate", async (interaction) => {
           return;
         }
 
-        // Use deadline_seconds if provided, otherwise convert days to seconds
-        const finalDeadlineDays = deadlineSeconds
-          ? deadlineSeconds / 86400 // Convert seconds to days for the tool
-          : days;
+        // Build the params - deadline = dispute window (handled by server)
+        const commitParams = {
+          contributorUsername: contributor.username,
+          amountMNEE: amount,
+          taskDescription: task,
+        };
+
+        if (deadlineSeconds) {
+          // Pass seconds directly - dispute window will match automatically
+          commitParams.deadlineSeconds = deadlineSeconds;
+        } else {
+          commitParams.deadlineDays = days;
+        }
 
         result = await serverClient.executeTool(
           "create_commitment",
-          {
-            contributorUsername: contributor.username,
-            amountMNEE: amount,
-            taskDescription: task,
-            deadlineDays: finalDeadlineDays,
-          },
+          commitParams,
           context
         );
         break;

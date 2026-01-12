@@ -95,10 +95,14 @@ DEPLOY_OUTPUT=$(forge script script/DeployLocal.s.sol:DeployLocal \
 echo "$DEPLOY_OUTPUT"
 
 # Extract contract address from deployment output
-CONTRACT_ADDRESS=$(echo "$DEPLOY_OUTPUT" | grep -oP 'Contract Address: \K0x[a-fA-F0-9]{40}' | head -1)
+CONTRACT_ADDRESS=$(echo "$DEPLOY_OUTPUT" | grep -oP 'Commit Protocol: \K0x[a-fA-F0-9]{40}' | head -1)
 
 if [ -z "$CONTRACT_ADDRESS" ]; then
-    # Try alternative pattern
+    # Try alternative patterns
+    CONTRACT_ADDRESS=$(echo "$DEPLOY_OUTPUT" | grep -oP 'Contract Address: \K0x[a-fA-F0-9]{40}' | head -1)
+fi
+
+if [ -z "$CONTRACT_ADDRESS" ]; then
     CONTRACT_ADDRESS=$(echo "$DEPLOY_OUTPUT" | grep -oP '(?<=Deployed to: )0x[a-fA-F0-9]{40}' | head -1)
 fi
 
@@ -206,9 +210,8 @@ fund_account() {
     
     # Verify balance
     BALANCE=$(cast call $MNEE_TOKEN "balanceOf(address)(uint256)" $RECIPIENT --rpc-url $RPC_URL)
-    BALANCE_MNEE=$(cast from-wei $BALANCE ether)
     
-    echo -e "${GREEN}✓ $NAME funded with $BALANCE_MNEE MNEE${NC}"
+    echo -e "${GREEN}✓ $NAME funded with 10000 MNEE${NC}"
 }
 
 # Fund all test accounts

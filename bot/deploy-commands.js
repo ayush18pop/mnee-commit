@@ -101,7 +101,7 @@ const commands = [
     .addNumberOption((option) =>
       option
         .setName("deadline_seconds")
-        .setDescription("Deadline in seconds from now (for quick demo)")
+        .setDescription("Deadline in seconds from now (for quick demo, also sets dispute window)")
         .setRequired(false)
     ),
 

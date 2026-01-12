@@ -85,6 +85,7 @@ class ServerClient {
   /**
    * Create a commitment with natural language description
    * Backend handles IPFS upload of spec
+   * NOTE: disputeWindow = deadline duration (by design)
    */
   async createCommitment(params) {
     try {
@@ -95,6 +96,7 @@ class ServerClient {
         amountMNEE: params.amountMNEE,
         taskDescription: params.taskDescription,
         deadlineDays: params.deadlineDays,
+        deadlineSeconds: params.deadlineSeconds, // Takes precedence if provided
         creatorDiscordId: params.creatorDiscordId,
       });
       return { success: true, data: response.data };
@@ -256,6 +258,45 @@ class ServerClient {
    */
   async settleCommitment(commitId) {
     try {
+      // First check if this commitment is actually settlable
+      const pendingResult = await this.getPendingSettlements();
+      if (!pendingResult.success) {
+        return { success: false, error: "Could not check settlement status" };
+      }
+
+      const settlements = pendingResult.data?.data?.settlements || [];
+      const isSettlable = settlements.some(
+        (s) => s.commitId === parseInt(commitId)
+      );
+
+      if (!isSettlable) {
+        // Get commitment details to provide better error message
+        const commitResult = await this.getCommitment(commitId);
+        const state = commitResult.data?.data?.state || "UNKNOWN";
+        
+        if (state === "SETTLED") {
+          return {
+            success: false,
+            error: `Commitment #${commitId} has already been settled.`,
+          };
+        } else if (state === "SUBMITTED") {
+          return {
+            success: false,
+            error: `Commitment #${commitId} is not yet settlable - dispute window has not closed.`,
+          };
+        } else if (state === "FUNDED") {
+          return {
+            success: false,
+            error: `Commitment #${commitId} cannot be settled - work has not been submitted yet.`,
+          };
+        } else {
+          return {
+            success: false,
+            error: `Commitment #${commitId} cannot be settled. Current state: ${state}`,
+          };
+        }
+      }
+
       const response = await this.client.post("/settlement/batch", {
         commitIds: [parseInt(commitId)],
       });
@@ -445,6 +486,7 @@ class ServerClient {
           amountMNEE: params.amountMNEE,
           taskDescription: params.taskDescription,
           deadlineDays: params.deadlineDays,
+          deadlineSeconds: params.deadlineSeconds, // For short-duration testing
           creatorDiscordId: discordId,
         });
       }

@@ -218,9 +218,9 @@ interface ICommit {
         string calldata _evidenceCid
     ) external;
     
-    function openDispute(uint256 _guildId, uint256 _commitId) external payable;
+    function openDispute(uint256 _guildId, uint256 _commitId) external;
     
-    // Settlement (owner only - for cron job)
+    // Settlement (relayer only - for cron job)
     function settle(uint256 _commitId) external;
     function batchSettle(uint256[] calldata _commitIds) external;
     
