@@ -1,10 +1,33 @@
 import { Client, GatewayIntentBits, REST, Routes } from "discord.js";
 import dotenv from "dotenv";
+import http from "http";
 import GeminiService from "./gemini-service.js";
 import ServerClient from "./server-client.js";
 import { verifyWork, formatVerificationMessage } from "./ai-verifier.js";
 
 dotenv.config();
+
+// Create HTTP server for Render (free tier requires web service)
+const PORT = process.env.PORT || 3001;
+const server = http.createServer((req, res) => {
+  if (req.url === "/health") {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(
+      JSON.stringify({
+        status: "ok",
+        bot: client.isReady() ? "connected" : "disconnected",
+        uptime: process.uptime(),
+      })
+    );
+  } else {
+    res.writeHead(200, { "Content-Type": "text/plain" });
+    res.end("Commit Protocol Discord Bot is running");
+  }
+});
+
+server.listen(PORT, () => {
+  console.log(`HTTP server listening on port ${PORT}`);
+});
 
 const client = new Client({
   intents: [

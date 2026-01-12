@@ -318,9 +318,20 @@ export default function RegisterPage() {
                       </ol>
                     </div>
                     
-                    <div className="flex gap-4 justify-center">
-                      <Link href="/dao">
-                        <Button variant="gold" size="lg">
+                    <div className="flex flex-col gap-4 justify-center">
+                      <a
+                        href="https://discord.com/oauth2/authorize?client_id=1457117017122541580&permissions=8&integration_type=0&scope=bot"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full"
+                      >
+                        <Button variant="gold" size="lg" className="w-full">
+                          <ExternalLink className="w-4 h-4" />
+                          Add Bot to Server
+                        </Button>
+                      </a>
+                      <Link href={`/dao?guildId=${serverId}`} className="w-full">
+                        <Button variant="outline" size="lg" className="w-full">
                           Go to Dashboard
                         </Button>
                       </Link>
