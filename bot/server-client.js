@@ -193,7 +193,9 @@ class ServerClient {
    */
   async calculateStake(commitId) {
     try {
-      const response = await this.client.get(`/dispute/calculate-stake/${commitId}`);
+      const response = await this.client.get(
+        `/dispute/calculate-stake/${commitId}`
+      );
       return { success: true, data: response.data.data };
     } catch (error) {
       return this.handleError(error, "calculate stake");
@@ -285,7 +287,7 @@ class ServerClient {
         // Get commitment details to provide better error message
         const commitResult = await this.getCommitment(commitId);
         const state = commitResult.data?.data?.state || "UNKNOWN";
-        
+
         if (state === "SETTLED") {
           return {
             success: false,
