@@ -13,6 +13,7 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useRegisterServer, useMneeBalance } from "@/hooks/useCommitProtocol";
 import { isValidDiscordId, isValidDiscordServerId, formatMNEE } from "@/lib/utils";
 import { REGISTRATION_FEE } from "@/lib/contracts";
+import { FaucetButton } from "@/components/FaucetButton";
 
 export default function RegisterPage() {
   const { address, isConnected } = useAccount();
@@ -22,7 +23,7 @@ export default function RegisterPage() {
   const [validationErrors, setValidationErrors] = useState<{ userId?: string; serverId?: string }>({});
   
   const { registerServer, step: txStep, error: txError, txHash, reset } = useRegisterServer();
-  const { data: mneeBalance } = useMneeBalance();
+  const { data: mneeBalance, refetch: refetchBalance } = useMneeBalance();
 
   // Validate inputs as user types
   const validateInputs = () => {
@@ -86,7 +87,7 @@ export default function RegisterPage() {
     <div className="min-h-screen bg-[#020202]">
       <Navbar />
 
-      <main className="pt-32 pb-20">
+      <main className="pt-navbar pb-20">
         <div className="max-w-2xl mx-auto px-6">
           {/* Header */}
           <motion.div
@@ -110,6 +111,20 @@ export default function RegisterPage() {
               Connect your Discord server to the Commit Protocol. Pay 15 MNEE from your wallet.
             </p>
           </motion.div>
+
+          {/* Testnet Faucet - Show when connected but doesn't have enough MNEE */}
+          {isConnected && !hasEnoughMnee && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6"
+            >
+              <FaucetButton 
+                address={address} 
+                onSuccess={() => refetchBalance()} 
+              />
+            </motion.div>
+          )}
 
           {/* Steps */}
           <motion.div

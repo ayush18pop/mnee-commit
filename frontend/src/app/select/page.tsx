@@ -87,7 +87,7 @@ function SelectDashboardInner() {
     <div className="min-h-screen bg-[#020202]">
       <Navbar />
 
-      <main className="pt-32 pb-20">
+      <main className="pt-navbar pb-20">
         <div className="max-w-5xl mx-auto px-6">
           {/* Header */}
           <motion.div
@@ -276,7 +276,7 @@ function Loading() {
   return (
     <div className="min-h-screen bg-[#020202]">
       <Navbar />
-      <main className="pt-32 flex items-center justify-center">
+      <main className="pt-navbar flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-[#c9a227]" />
       </main>
     </div>

@@ -7,10 +7,11 @@ import { Menu, X, Plus } from "lucide-react";
 import { WalletButton } from "@/components/web3/WalletButton";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
+import { IS_TESTNET } from "@/lib/contracts";
 
 const navItems = [
   { label: "Protocol", href: "/docs" },
-  { label: "DAO Dashboard", href: "/dao" },
+  { label: "DAO Dashboard", href: "/select" },
   { label: "Contributor", href: "/contributor" },
   { label: "Arbitrator", href: "/arbitrator" },
 ];
@@ -33,7 +34,8 @@ export function Navbar() {
       animate={{ opacity: 1 }}
       transition={{ duration: 1.2, ease: [0.25, 0.1, 0.25, 1] }}
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 transition-all duration-700",
+        "fixed left-0 right-0 z-50 transition-all duration-700",
+        IS_TESTNET ? "top-[36px]" : "top-0",
         scrolled
           ? "bg-[#020202]/90 backdrop-blur-md border-b border-[rgba(255,255,255,0.04)]"
           : "bg-transparent"

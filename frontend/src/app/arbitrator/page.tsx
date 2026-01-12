@@ -15,7 +15,7 @@ export default function ArbitratorPage() {
     <div className="min-h-screen bg-[#020202]">
       <Sidebar type="arbitrator" />
 
-      <main className="ml-[280px] pt-12 pb-20 px-10">
+      <main className="ml-[280px] pt-dashboard pb-20 px-10">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <motion.div

@@ -17,6 +17,11 @@ export const CONTRACT_ADDRESS = process.env['CONTRACT_ADDRESS'] ?? '';
 export const MNEE_TOKEN_ADDRESS = process.env['MNEE_TOKEN_ADDRESS'] ?? '';
 
 /**
+ * Testnet Mode (enables faucet and other testnet features)
+ */
+export const TESTNET_MODE = process.env['TESTNET_MODE'] === 'true';
+
+/**
  * Relayer Wallet (for settlement and other write operations)
  * This wallet calls settle(), batchSettle(), and other relayer functions
  */

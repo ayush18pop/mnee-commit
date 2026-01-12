@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Web3Provider } from "@/providers/Web3Provider";
+import { TestnetBanner } from "@/components/TestnetBanner";
+import { LayoutEffects } from "@/components/layout/LayoutEffects";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -28,6 +30,12 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className="min-h-screen bg-[#020202] text-white antialiased">
+        {/* Testnet warning banner (only shows in testnet mode) */}
+        <TestnetBanner />
+        
+        {/* Layout effects - handles dynamic body classes */}
+        <LayoutEffects />
+        
         <Web3Provider>
           {/* Ambient background with noise */}
           <div className="ambient-bg" />

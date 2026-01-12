@@ -19,7 +19,7 @@ function Loading() {
   return (
     <div className="min-h-screen bg-[#020202]">
       <Sidebar type="dao" />
-      <main className="ml-[280px] pt-12 pb-20 px-10 flex items-center justify-center h-64">
+      <main className="ml-[280px] pt-dashboard pb-20 px-10 flex items-center justify-center h-64">
         <Loader2 className="w-8 h-8 animate-spin text-[#c9a227]" />
       </main>
     </div>
@@ -51,7 +51,7 @@ function DAODashboardInner() {
     return (
       <div className="min-h-screen bg-[#020202]">
         <Sidebar type="dao" />
-        <main className="ml-[280px] pt-12 pb-20 px-10">
+        <main className="ml-[280px] pt-dashboard pb-20 px-10">
           <div className="max-w-4xl mx-auto">
             <Card variant="warm" padding="lg">
               <CardContent>
@@ -88,7 +88,7 @@ function DAODashboardInner() {
     return (
       <div className="min-h-screen bg-[#020202]">
         <Sidebar type="dao" />
-        <main className="ml-[280px] pt-12 pb-20 px-10">
+        <main className="ml-[280px] pt-dashboard pb-20 px-10">
           <div className="flex items-center justify-center h-64">
             <Loader2 className="w-8 h-8 animate-spin text-[#c9a227]" />
           </div>
@@ -102,7 +102,7 @@ function DAODashboardInner() {
     return (
       <div className="min-h-screen bg-[#020202]">
         <Sidebar type="dao" />
-        <main className="ml-[280px] pt-12 pb-20 px-10">
+        <main className="ml-[280px] pt-dashboard pb-20 px-10">
           <div className="max-w-4xl mx-auto">
             <Card variant="warm" padding="lg">
               <CardContent>
@@ -132,7 +132,7 @@ function DAODashboardInner() {
     <div className="min-h-screen bg-[#020202]">
       <Sidebar type="dao" />
 
-      <main className="ml-[280px] pt-12 pb-20 px-10">
+      <main className="ml-[280px] pt-dashboard pb-20 px-10">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <motion.div

@@ -27,8 +27,7 @@ import type {
 
 export const commitRouter = Router();
 
-// MNEE Token address on mainnet
-const MNEE_TOKEN = '0x8ccedbAe4916b79da7F3F612EfB2EB93A2bFD6cF';
+import { MNEE_TOKEN_ADDRESS } from '../config/index.js';
 
 
 /**
@@ -201,7 +200,7 @@ commitRouter.post('/create', async (req: Request, res: Response) => {
     const result = await contractCreateCommitment(
       input.guildId,
       input.contributorAddress,
-      MNEE_TOKEN,
+      MNEE_TOKEN_ADDRESS,
       amountWei,
       deadline,
       disputeWindow,

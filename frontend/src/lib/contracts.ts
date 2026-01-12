@@ -7,6 +7,9 @@
 export const COMMIT_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_COMMIT_CONTRACT_ADDRESS as `0x${string}`;
 export const MNEE_TOKEN_ADDRESS = (process.env.NEXT_PUBLIC_MNEE_TOKEN_ADDRESS || '0x8ccedbAe4916b79da7F3F612EfB2EB93A2bFD6cF') as `0x${string}`;
 
+// Testnet mode detection
+export const IS_TESTNET = process.env.NEXT_PUBLIC_TESTNET_MODE === 'true';
+
 // Registration fee: 15 MNEE (18 decimals)
 export const REGISTRATION_FEE = BigInt(15) * BigInt(10 ** 18);
 

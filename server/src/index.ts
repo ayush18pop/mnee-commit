@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 
-import { validateConfig, PORT } from './config/index.js';
+import { validateConfig, PORT, TESTNET_MODE } from './config/index.js';
 import { initializeContract, isContractConfigured } from './services/contractService.js';
 import { startScheduler, stopScheduler } from './services/scheduler.js';
 import { isIpfsConfigured } from './services/ipfsService.js';
@@ -13,6 +13,7 @@ import { settlementRouter } from './routes/settlement.js';
 import { adminRouter } from './routes/admin.js';
 import { agentRouter } from './routes/agent.js';
 import { userRouter } from './routes/user.js';
+import { faucetRouter } from './routes/faucet.js';
 
 // ============================================================================
 // Server Configuration
@@ -72,6 +73,7 @@ app.use('/settlement', settlementRouter);
 app.use('/admin', adminRouter);
 app.use('/agent', agentRouter);
 app.use('/user', userRouter);
+app.use('/faucet', faucetRouter);
 
 // 404 handler
 app.use((req, res) => {
@@ -151,6 +153,14 @@ async function main(): Promise<void> {
     console.log('  GET  /health                     - Health check');
     console.log('  GET  /admin/stats                - Protocol statistics');
     console.log('');
+    
+    if (TESTNET_MODE) {
+      console.log('\n🧪 TESTNET MODE ENABLED');
+      console.log('Faucet:');
+      console.log('  POST /faucet                     - Request MockMNEE tokens');
+      console.log('  GET  /faucet/status              - Check faucet status');
+      console.log('');
+    }
   });
 
   // Graceful shutdown

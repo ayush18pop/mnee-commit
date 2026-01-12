@@ -47,7 +47,7 @@ export default function DocsPage() {
     <div className="min-h-screen bg-[#020202]">
       <Navbar />
 
-      <main className="pt-32 pb-20">
+      <main className="pt-navbar pb-20">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           {/* Header */}
           <motion.div
