@@ -101,7 +101,9 @@ export const commands = [
     .addNumberOption((option) =>
       option
         .setName("deadline_seconds")
-        .setDescription("Deadline in seconds from now (for quick demo, also sets dispute window)")
+        .setDescription(
+          "Deadline in seconds from now (for quick demo, also sets dispute window)"
+        )
         .setRequired(false)
     ),
 
@@ -211,7 +213,7 @@ export const commands = [
  */
 export async function registerCommandsToGuild(guildId) {
   const rest = new REST({ version: "10" }).setToken(process.env.BOT_TOKEN);
-  
+
   try {
     console.log(`Registering slash commands to guild ${guildId}...`);
 
@@ -220,7 +222,9 @@ export async function registerCommandsToGuild(guildId) {
       { body: commands }
     );
 
-    console.log(`✅ Successfully registered ${commands.length} slash commands to guild ${guildId}!`);
+    console.log(
+      `✅ Successfully registered ${commands.length} slash commands to guild ${guildId}!`
+    );
     return true;
   } catch (error) {
     console.error(`Error registering commands to guild ${guildId}:`, error);
