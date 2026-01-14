@@ -12,8 +12,32 @@ class ServerClient {
       headers: {
         "Content-Type": "application/json",
       },
-      timeout: 30000,
+      timeout: 60000, // Increased to 60s for Render cold starts
     });
+
+    // Add retry interceptor for 502/503 errors (server waking up)
+    this.client.interceptors.response.use(
+      (response) => response,
+      async (error) => {
+        const config = error.config;
+        
+        // Retry on 502/503 (server starting) - max 3 retries
+        if (
+          (error.response?.status === 502 || error.response?.status === 503) &&
+          (!config._retryCount || config._retryCount < 3)
+        ) {
+          config._retryCount = (config._retryCount || 0) + 1;
+          console.log(`Server starting up... retry ${config._retryCount}/3`);
+          
+          // Wait before retry (exponential backoff)
+          await new Promise(resolve => setTimeout(resolve, config._retryCount * 5000));
+          
+          return this.client(config);
+        }
+        
+        return Promise.reject(error);
+      }
+    );
   }
 
   // ============================================================================

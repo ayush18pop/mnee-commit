@@ -4,6 +4,7 @@ import http from "http";
 import GeminiService from "./gemini-service.js";
 import ServerClient from "./server-client.js";
 import { verifyWork, formatVerificationMessage } from "./ai-verifier.js";
+import { registerCommandsToGuild } from "./deploy-commands.js";
 
 dotenv.config();
 
@@ -338,8 +339,63 @@ function getContext(interaction) {
   };
 }
 
-client.on("clientReady", () => {
+client.on("clientReady", async () => {
   console.log(`${client.user.tag} online`);
+  
+  // Register commands to all guilds the bot is currently in
+  console.log(`📋 Registering commands to ${client.guilds.cache.size} existing guilds...`);
+  
+  for (const [guildId, guild] of client.guilds.cache) {
+    try {
+      await registerCommandsToGuild(guildId);
+    } catch (error) {
+      console.error(`Failed to register commands to ${guild.name} (${guildId}):`, error);
+    }
+  }
+  
+  console.log("✅ Command registration complete for all guilds");
+});
+
+// ============================================================================
+// Auto-register commands when bot joins a new server
+// ============================================================================
+client.on("guildCreate", async (guild) => {
+  console.log(`🎉 Joined new server: ${guild.name} (${guild.id})`);
+  
+  try {
+    const success = await registerCommandsToGuild(guild.id);
+    
+    if (success) {
+      // Try to send a welcome message to the system channel or first text channel
+      const welcomeChannel = guild.systemChannel || 
+        guild.channels.cache.find(ch => ch.type === 0 && ch.permissionsFor(guild.members.me)?.has('SendMessages'));
+      
+      if (welcomeChannel) {
+        await welcomeChannel.send({
+          embeds: [{
+            title: "🚀 Commit Protocol Bot is Ready!",
+            description: "Thanks for adding me! I've set up all the slash commands for this server.",
+            color: 0x00ff00,
+            fields: [
+              {
+                name: "Get Started",
+                value: "• `/help` - See all available commands\n• `/serverstatus` - Check if this server is registered\n• Make sure to register your DAO at https://mnee.io/register",
+              },
+              {
+                name: "Need Help?",
+                value: "Visit our [documentation](https://mnee.io/docs) or join our community for support.",
+              }
+            ],
+            footer: {
+              text: "Commit Protocol - Trustless Work Commitments"
+            }
+          }]
+        });
+      }
+    }
+  } catch (error) {
+    console.error(`Error setting up new guild ${guild.name}:`, error);
+  }
 });
 
 // ============================================================================

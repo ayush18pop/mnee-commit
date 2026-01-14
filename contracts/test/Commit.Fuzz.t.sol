@@ -84,12 +84,12 @@ contract CommitFuzzTest is Test {
         uint256 guildId = 123456;
         
         vm.prank(serverAdmin);
-        commit.registerServer(guildId, 999);
+        commit.registerServer(bytes32(guildId), bytes32(uint256( 999);
         
         vm.prank(serverAdmin);
-        commit.depositToServer(guildId, amount);
+        commit.depositToServer(bytes32(guildId), amount);
         
-        (uint256 deposited, , uint256 available) = commit.getServerBalance(guildId);
+        (uint256 deposited, , uint256 available) = commit.getServerBalance(bytes32(guildId));
         assertEq(deposited, amount);
         assertEq(available, amount);
     }
@@ -101,15 +101,15 @@ contract CommitFuzzTest is Test {
         uint256 guildId = 123456;
         
         vm.prank(serverAdmin);
-        commit.registerServer(guildId, 999);
+        commit.registerServer(bytes32(guildId), bytes32(uint256( 999);
         
         vm.prank(serverAdmin);
-        commit.depositToServer(guildId, amount1);
+        commit.depositToServer(bytes32(guildId), amount1);
         
         vm.prank(serverAdmin);
-        commit.depositToServer(guildId, amount2);
+        commit.depositToServer(bytes32(guildId), amount2);
         
-        (uint256 deposited, , uint256 available) = commit.getServerBalance(guildId);
+        (uint256 deposited, , uint256 available) = commit.getServerBalance(bytes32(guildId));
         assertEq(deposited, amount1 + amount2);
         assertEq(available, amount1 + amount2);
     }
@@ -125,10 +125,10 @@ contract CommitFuzzTest is Test {
         
         // Register and fund
         vm.prank(serverAdmin);
-        commit.registerServer(guildId, 999);
+        commit.registerServer(bytes32(guildId), bytes32(uint256( 999);
         
         vm.prank(serverAdmin);
-        commit.depositToServer(guildId, amount + 100 * 10**18); // Extra buffer
+        commit.depositToServer(bytes32(guildId), amount + 100 * 10**18); // Extra buffer
         
         // Create commitment
         vm.prank(relayer);
@@ -154,10 +154,10 @@ contract CommitFuzzTest is Test {
         uint256 amount = 1000 * 10**18;
         
         vm.prank(serverAdmin);
-        commit.registerServer(guildId, 999);
+        commit.registerServer(bytes32(guildId), bytes32(uint256( 999);
         
         vm.prank(serverAdmin);
-        commit.depositToServer(guildId, amount);
+        commit.depositToServer(bytes32(guildId), amount);
         
         vm.prank(relayer);
         uint256 commitId = commit.createCommitment(
@@ -181,10 +181,10 @@ contract CommitFuzzTest is Test {
         uint256 guildId = 123456;
         
         vm.prank(serverAdmin);
-        commit.registerServer(guildId, 999);
+        commit.registerServer(bytes32(guildId), bytes32(uint256( 999);
         
         vm.prank(serverAdmin);
-        commit.depositToServer(guildId, balance);
+        commit.depositToServer(bytes32(guildId), balance);
         
         // Try to create commitment exceeding balance
         vm.prank(relayer);
@@ -211,19 +211,19 @@ contract CommitFuzzTest is Test {
         uint256 guildId = 123456;
         
         vm.prank(serverAdmin);
-        commit.registerServer(guildId, 999);
+        commit.registerServer(bytes32(guildId), bytes32(uint256( 999);
         
         vm.prank(serverAdmin);
-        commit.depositToServer(guildId, deposit);
+        commit.depositToServer(bytes32(guildId), deposit);
         
         uint256 balBefore = mnee.balanceOf(serverAdmin);
         
         vm.prank(relayer);
-        commit.withdrawFromServer(guildId, serverAdmin, withdraw);
+        commit.withdrawFromServer(bytes32(guildId), serverAdmin, withdraw);
         
         assertEq(mnee.balanceOf(serverAdmin), balBefore + withdraw);
         
-        (,, uint256 available) = commit.getServerBalance(guildId);
+        (,, uint256 available) = commit.getServerBalance(bytes32(guildId));
         assertEq(available, deposit - withdraw);
     }
     
@@ -234,14 +234,14 @@ contract CommitFuzzTest is Test {
         uint256 guildId = 123456;
         
         vm.prank(serverAdmin);
-        commit.registerServer(guildId, 999);
+        commit.registerServer(bytes32(guildId), bytes32(uint256( 999);
         
         vm.prank(serverAdmin);
-        commit.depositToServer(guildId, deposit);
+        commit.depositToServer(bytes32(guildId), deposit);
         
         vm.prank(relayer);
         vm.expectRevert();
-        commit.withdrawFromServer(guildId, serverAdmin, deposit + extra);
+        commit.withdrawFromServer(bytes32(guildId), serverAdmin, deposit + extra);
     }
     
     // ============================================================================
@@ -256,10 +256,10 @@ contract CommitFuzzTest is Test {
         uint256 amount = 1000 * 10**18;
         
         vm.prank(serverAdmin);
-        commit.registerServer(guildId, 999);
+        commit.registerServer(bytes32(guildId), bytes32(uint256( 999);
         
         vm.prank(serverAdmin);
-        commit.depositToServer(guildId, amount);
+        commit.depositToServer(bytes32(guildId), amount);
         
         vm.prank(relayer);
         uint256 commitId = commit.createCommitment(
@@ -296,10 +296,10 @@ contract CommitFuzzTest is Test {
         uint256 amount = 1000 * 10**18;
         
         vm.prank(serverAdmin);
-        commit.registerServer(guildId, 999);
+        commit.registerServer(bytes32(guildId), bytes32(uint256( 999);
         
         vm.prank(serverAdmin);
-        commit.depositToServer(guildId, amount);
+        commit.depositToServer(bytes32(guildId), amount);
         
         vm.prank(relayer);
         uint256 commitId = commit.createCommitment(

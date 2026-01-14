@@ -6,7 +6,7 @@ dotenv.config();
  * Discord Slash Commands for Commit Protocol
  * These mirror the MCP tools for traditional command usage
  */
-const commands = [
+export const commands = [
   // ==================== Quick Query Commands ====================
   new SlashCommandBuilder()
     .setName("help")
@@ -204,21 +204,32 @@ const commands = [
     .setDescription("Check if the bot is alive"),
 ].map((command) => command.toJSON());
 
-const rest = new REST({ version: "10" }).setToken(process.env.BOT_TOKEN);
+/**
+ * Register slash commands to a specific guild
+ * @param {string} guildId - The Discord guild/server ID
+ * @returns {Promise<void>}
+ */
+export async function registerCommandsToGuild(guildId) {
+  const rest = new REST({ version: "10" }).setToken(process.env.BOT_TOKEN);
+  
+  try {
+    console.log(`Registering slash commands to guild ${guildId}...`);
 
-try {
-  console.log("Registering slash commands...");
+    await rest.put(
+      Routes.applicationGuildCommands(process.env.CLIENT_ID, guildId),
+      { body: commands }
+    );
 
-  await rest.put(
-    Routes.applicationGuildCommands(
-      process.env.CLIENT_ID,
-      process.env.GUILD_ID
-    ),
-    { body: commands }
-  );
+    console.log(`✅ Successfully registered ${commands.length} slash commands to guild ${guildId}!`);
+    return true;
+  } catch (error) {
+    console.error(`Error registering commands to guild ${guildId}:`, error);
+    return false;
+  }
+}
 
-  console.log(`✅ Successfully registered ${commands.length} slash commands!`);
-  console.log("Commands:", commands.map((c) => `/${c.name}`).join(", "));
-} catch (error) {
-  console.error("Error registering commands:", error);
+// If run directly (not imported), register to the default GUILD_ID
+const isMainModule = import.meta.url === `file://${process.argv[1]}`;
+if (isMainModule && process.env.GUILD_ID) {
+  registerCommandsToGuild(process.env.GUILD_ID);
 }
