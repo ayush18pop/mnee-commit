@@ -8,6 +8,15 @@ A trustless escrow system for work commitments that combines smart contract escr
 [![Solidity](https://img.shields.io/badge/Solidity-^0.8.20-blue)](https://soliditylang.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue)](https://www.typescriptlang.org/)
 
+## 🚀 Deployed Contracts
+
+- **Commit Protocol Contract**: `0x63c0eA0260846bAaF4b73c3792699bf205B6c3ba`
+- **MNEE Token Contract**: `0xE9cBe461c30021257c52da81674B38158DD23FF5`
+
+*Network: Sepolia Testnet*
+
+> **Note**: The protocol has been thoroughly tested on a forked Anvil chain, confirming readiness for mainnet deployment.
+
 ## 🎯 Overview
 
 Commit Protocol enables Discord communities and projects to:
