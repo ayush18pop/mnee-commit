@@ -4,6 +4,10 @@
 
 A trustless escrow system for work commitments that combines smart contract escrow, AI-powered verification, and optimistic settlement with dynamic economic security. Discord servers register and manage prepaid MNEE balances for seamless commitment creation.
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Solidity](https://img.shields.io/badge/Solidity-^0.8.20-blue)](https://soliditylang.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue)](https://www.typescriptlang.org/)
+
 ## 🎯 Overview
 
 Commit Protocol enables Discord communities and projects to:
@@ -14,6 +18,32 @@ Commit Protocol enables Discord communities and projects to:
 - ✅ **Dynamic stakes** that scale with task value, reputation, and AI confidence
 - ✅ **User-wallet mapping** for seamless Discord-to-blockchain identity
 - ✅ **Secure relayer pattern** - bot wallet controls all contract interactions
+
+### Key Features
+
+**💼 For Discord Communities:**
+- One-time server registration (15 MNEE)
+- Centralized MNEE balance for all commitments
+- Role-based access control (commit-creator role)
+- No per-user wallet management needed
+
+**🤝 For Contributors:**
+- Link Discord username to wallet once
+- Get paid automatically after deadline + dispute window
+- Build reputation over time for better terms
+
+**🔒 Security Model:**
+- **Trustless escrow** - funds locked in smart contract
+- **Optimistic settlement** - automatic release unless disputed
+- **Dynamic stakes** - dispute costs scale with task value and confidence
+- **Immutable evidence** - all work stored on IPFS
+
+📖 **Full Protocol Specification**: See [commit-protocol/PROTOCOL.md](./commit-protocol/PROTOCOL.md) for complete technical details including:
+- Smart contract architecture and interfaces
+- Dynamic stake calculation formulas
+- AI agent implementation details
+- Deployment guides and testing procedures
+- Security model and trust assumptions
 
 ## 🏗️ Architecture
 
@@ -380,13 +410,24 @@ Sreq = Sbase × Mtime × Mrep × MAI
 
 ## 📄 License
 
-MIT License - see [LICENSE](./LICENSE) for details
+This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
+
+The MIT License is a permissive open source license that allows you to:
+- ✅ Use the code commercially
+- ✅ Modify and distribute the code
+- ✅ Use it privately
+- ✅ Sublicense
+
+The only requirement is to include the original copyright notice and license text.
 
 ## 🔗 Links
 
-- **Documentation**: [PROTOCOL.md](./commit-protocol/PROTOCOL.md)
+- **Full Protocol Specification**: [commit-protocol/PROTOCOL.md](./commit-protocol/PROTOCOL.md)
 - **Whitepaper**: [commit_protocol.pdf](./commit-protocol/commit_protocol.pdf)
 - **MNEE Token**: [Etherscan](https://etherscan.io/token/0x8ccedbAe4916b79da7F3F612EfB2EB93A2bFD6cF)
+- **Security Guidelines**: [SECURITY.md](./SECURITY.md)
+- **Development Guide**: [DEVELOPMENT.md](./DEVELOPMENT.md)
+- **Testnet Guide**: [TESTNET.md](./TESTNET.md)
 
 ---
 
