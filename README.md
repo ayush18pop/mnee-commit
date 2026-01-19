@@ -12,7 +12,8 @@ A trustless escrow system for work commitments that combines smart contract escr
 
 - **Commit Protocol Contract**: `0x63c0eA0260846bAaF4b73c3792699bf205B6c3ba`
 - **MNEE Token Contract**: `0xE9cBe461c30021257c52da81674B38158DD23FF5`
-
+- **Disocrd Bot Link**: https://discord.com/oauth2/authorize?client_id=1457117017122541580&permissions=8&integration_type=0&scope=bot
+  
 *Network: Sepolia Testnet*
 
 > **Note**: The protocol has been thoroughly tested on a forked Anvil chain, confirming readiness for mainnet deployment.
